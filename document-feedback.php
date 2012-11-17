@@ -226,6 +226,14 @@ class Document_Feedback {
 					$is_comment_updated = wp_update_comment( $comment );
 					if( ! $is_comment_updated ) {
 						$error = new WP_Error( 'invalid-post', __( 'Comment not updated.', 'document-feedback' ) );
+					} else {
+						// success
+						$response = array(
+								'status' => 'final_response',
+								'message' => $comment['comment_content'],
+						);
+						echo json_encode( $response );
+						exit;
 					}
 				} else {
 					$error = new WP_Error( 'invalid-post', __( 'Invalid user ID for comment.', 'document-feedback' ) );
@@ -311,8 +319,10 @@ class Document_Feedback {
 							jQuery('#document-feedback .document-feedback-form').hide();
 							jQuery('#document-feedback-accept').hide();
 							jQuery('#document-feedback-decline').show();
-						} elseif( df_data.response === 'send_feedback' ) {
-							// hide dialog, everyone happy
+						} else if( response_obj.status === 'final_response' ) {
+							jQuery('#document-feedback-accept').hide();
+							jQuery('#document-feedback-decline').hide();
+							jQuery('#document-feedback-success').show();
 						}
 						console.log( response );
 						return false;
@@ -334,7 +344,8 @@ class Document_Feedback {
 				padding-top: 10px;
 			}
 			#document-feedback #document-feedback-accept,
-			#document-feedback #document-feedback-decline {
+			#document-feedback #document-feedback-decline,
+			#document-feedback #document-feedback-success {
 				display: none;
 			}
 			#document-feedback label.block {
@@ -353,6 +364,7 @@ class Document_Feedback {
 
 		// Initial prompt
 		ob_start(); ?>
+		<div id="document-feedback-success"><?php echo esc_html ($this->strings['final_response'] ); ?></div>
 		<form id="document-feedback-prompt" class="document-feedback-form" method="POST" action="">
 			<label><?php echo esc_html( $this->strings['prompt'] ); ?></label>
 			<input type="submit" class="button" id="document-feedback-accept-button" name="document-feedback-accept-button" value="<?php echo esc_attr( $this->strings['accept'] ); ?>" />

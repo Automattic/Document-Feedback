@@ -257,7 +257,7 @@ class Document_Feedback {
 						var response = 'decline';
 					} else {
 						var form = 'response';
-						var response = jQuery(this).sibling('.document-feedback-response').val();
+						var response = jQuery(this).siblings('.document-feedback-response').val();
 					}
 					var df_data = {
 						action: 'document_feedback_form_submission',
@@ -268,6 +268,15 @@ class Document_Feedback {
 						comment_id: comment_id,
 					};
 					jQuery.post( ajaxurl, df_data, function( response ) {
+						if( df_data['response'] === 'accept' ) {
+							jQuery('#document-feedback .document-feedback-form').hide();
+							jQuery('#document-feedback-accept').show();
+							jQuery('#document-feedback-decline').hide();
+						} else if( df_data['response'] === 'decline' ) {
+							jQuery('#document-feedback .document-feedback-form').hide();
+							jQuery('#document-feedback-accept').hide();
+							jQuery('#document-feedback-decline').show();
+						}
 						console.log( response );
 						return false;
 					});
@@ -320,7 +329,7 @@ class Document_Feedback {
 		ob_start(); ?>
 		<form id="document-feedback-accept" class="document-feedback-form" method="POST" action="">
 			<label class="block" for="document-feedback-accept-response"><?php echo esc_html( $this->strings['prompt_response'] . ' ' . $this->strings['accept_prompt'] ); ?></label>
-			<input type="text" class="medium" id="document-feedback-accept-response" name="document-feedback-accept-response" class="document-feedback-response" />
+			<input type="text" class="medium document-feedback-response" id="document-feedback-accept-response" name="document-feedback-accept-response" />
 			<input type="submit" class="button document-feedback-submit-response" name="submit" value="<?php _e( 'Send feedback', 'document-feedback' ); ?>" />
 		</form>
 		<?php
@@ -331,7 +340,7 @@ class Document_Feedback {
 		ob_start(); ?>
 		<form id="document-feedback-decline" class="document-feedback-form" method="POST" action="">
 			<label class="block" for="document-feedback-decline-response"><?php echo esc_html( $this->strings['prompt_response'] . ' ' . $this->strings['decline_prompt'] ); ?></label>
-			<input type="text" class="medium" id="document-feedback-decline-response" name="document-feedback-decline-response" class="document-feedback-response" />
+			<input type="text" class="medium document-feedback-response" id="document-feedback-decline-response" name="document-feedback-decline-response" />
 			<input type="submit" class="button document-feedback-submit-response" name="submit" value="<?php _e( 'Send feedback', 'document-feedback' ); ?>" />
 		</form>
 		<?php

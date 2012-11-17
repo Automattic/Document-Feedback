@@ -210,14 +210,42 @@ class Document_Feedback {
 			$response = array(
 					'status' => 'success',
 					'message' => 'comment-id-' . $comment_id,
+					'comment_id' => $comment_id
 				);
 		}
 		// Follow up response form submission
 		// Save the message submitted as the message in the comment
 		else {
+			$comment = get_comment( $comment_id, ARRAY_A );
+			
+			// Manage comment and update if existing and if the comment author is the same as the feedback author
+			if( ! is_null( $comment ) ) {
+				$comment_author_id = (int) $comment['user_id'];
+				if( $comment_author_id && $comment_author_id == $current_user->ID ) {
+					$comment['comment_content'] = $_POST['response'];
+					$is_comment_updated = wp_update_comment( $comment );
+					if( ! $is_comment_updated ) {
+						$error = new WP_Error( 'invalid-post', __( 'Comment not updated.', 'document-feedback' ) );
+					}
+				} else {
+					$error = new WP_Error( 'invalid-post', __( 'Invalid user ID for comment.', 'document-feedback' ) );
+				}			
+			} else {
+				$error = new WP_Error( 'invalid-post', __( 'Invalid comment entry.', 'document-feedback' ) );
+			}
+
+			if ( is_wp_error( $error ) ) {
+				$response = array(
+						'status' => 'error',
+						'message' => $error->get_error_message(),
+				);
+				echo json_encode( $response );
+				exit;
+			}
+			
 			$response = array(
 					'status' => 'success',
-					'message' => $comment_id,
+					'message' => $comment['comment_content']
 				);
 		}
 
@@ -268,14 +296,23 @@ class Document_Feedback {
 						comment_id: comment_id,
 					};
 					jQuery.post( ajaxurl, df_data, function( response ) {
-						if( df_data['response'] === 'accept' ) {
+						response_obj = jQuery.parseJSON( response );
+						var comment_id = response_obj.comment_id;
+						if( comment_id === undefined || isNaN( parseInt( comment_id ) ) ) {
+							comment_id = 0;
+						}
+						if( df_data.response === 'accept' ) {
+							jQuery('#document-feedback-comment-id').val( comment_id );
 							jQuery('#document-feedback .document-feedback-form').hide();
 							jQuery('#document-feedback-accept').show();
 							jQuery('#document-feedback-decline').hide();
-						} else if( df_data['response'] === 'decline' ) {
+						} else if( df_data.response === 'decline' ) {
+							jQuery('#document-feedback-comment-id').val( comment_id );
 							jQuery('#document-feedback .document-feedback-form').hide();
 							jQuery('#document-feedback-accept').hide();
 							jQuery('#document-feedback-decline').show();
+						} elseif( df_data.response === 'send_feedback' ) {
+							// hide dialog, everyone happy
 						}
 						console.log( response );
 						return false;

@@ -379,7 +379,6 @@ class Document_Feedback {
 								jQuery('#document-feedback-decline').hide();
 								jQuery('#document-feedback-success').show();
 							}
-							console.log( response );
 							return false;
 						});
 						return false;

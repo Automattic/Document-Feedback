@@ -227,9 +227,12 @@ class Document_Feedback {
 			
 			// Set the comment type based on the value of the response
 			if ( $_POST['response'] == 'accept' )
-				$comment_data['comment_type'] = 'df-accept';
+				$comment_data['comment_approved'] = 'df-accept';
 			if ( $_POST['response'] == 'decline' )
-				$comment_data['comment_type'] = 'df-decline';
+				$comment_data['comment_approved'] = 'df-decline';
+
+			// Document feedbacks are always a special type
+			$comment_data['comment_type'] = 'document-feedback';
 
 			$comment_id = wp_insert_comment( $comment_data );
 			$response = array(

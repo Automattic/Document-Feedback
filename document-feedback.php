@@ -190,40 +190,25 @@ class Document_Feedback {
 	 */
 	function action_wp_ajax_handle_form_submission() {
 
-		$error = false;
-
 		// User must be logged in for all actions
-		if ( !is_user_logged_in() )
-			$error = new WP_Error( 'not-logged-in', __( 'You need to be logged in to submit feedback.', 'document-feedback' ) );
+		if ( ! is_user_logged_in() )
+			$this->do_ajax_response( 'error', __( 'You need to be logged in to submit feedback.', 'document-feedback' ) );
 
 		// Nonce check
-		if ( !wp_verify_nonce( $_POST['nonce'], 'document-feedback' ) )
-			$error = new WP_Error( 'nonce-error', __( 'Nonce error. Are you sure you are who you say you are?', 'document-feedback' ) );
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'document-feedback' ) )
+			$this->do_ajax_response( 'error', __( 'Nonce error. Are you sure you are who you say you are?', 'document-feedback' ) );
 
 		// Feedback must be left on a valid post
 		$post_id = (int)$_POST['post_id'];
 		if ( false === ( $post = get_post( $post_id ) ) )
-			$error = new WP_Error( 'invalid-post', __( 'Invalid post for feedback.', 'document-feedback' ) );
-		else
-			$post_id = $post->ID;
+			$this->do_ajax_response( 'error', __( 'Invalid post for feedback.', 'document-feedback' ) );
 
 		// Check that the comment exists if we're passed a valid comment ID
 		$comment_id = (int)$_POST['comment_id'];
 		if ( $comment_id && ( false === ( $comment = get_comment( $comment_id ) ) ) )
-			$error = new WP_Error( 'invalid-post', __( 'Invalid comment.', 'document-feedback' ) );
-		else
-			$comment_id = (int)$_POST['comment_id'];
+			$this->do_ajax_response( 'error', __( 'Invalid comment.', 'document-feedback' ) );
 
 		// @todo Ensure the user isn't hitting the throttle limit
-			
-		if ( is_wp_error( $error ) ) {
-			$response = array(
-					'status' => 'error',
-					'message' => $error->get_error_message(),
-				);
-			echo json_encode( $response );
-			exit;
-		}
 
 		$current_user = wp_get_current_user();
 
@@ -302,6 +287,22 @@ class Document_Feedback {
 				);
 		}
 
+		echo json_encode( $response );
+		exit;
+	}
+
+	/**
+	 * Do an ajax response
+	 *
+	 * @param string $status 'success' or 'error'
+	 * @param array $data Any additional data
+	 */
+	private function do_ajax_response( $status, $data = array() ) {
+
+		$response = array(
+				'status' => $status,
+			);
+		$response = array_merge( $response, $data );
 		echo json_encode( $response );
 		exit;
 	}

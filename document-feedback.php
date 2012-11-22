@@ -218,7 +218,7 @@ class Document_Feedback {
 
 			// Set up all of the base data for our comment
 			$comment_data = array(
-					'comment_post_id'       => $post_id,
+					'comment_post_ID'       => $post_id,
 					'comment_author'        => $current_user->display_name,
 					'comment_author_email'  => $current_user->user_email,
 					'comment_author_url'    => $current_user->user_url,

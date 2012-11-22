@@ -36,14 +36,48 @@ if ( !class_exists( 'Document_Feedback' ) ) {
 
 class Document_Feedback {
 
-	var $options;
-	var $strings;
-	var $post_types;
+	private $data;
+
+	private static $instance;
+
+	public static function get_instance() {
+		if ( ! isset( self::$instance ) ) {
+			self::$instance = new Document_Feedback;
+			self::$instance->setup_actions();
+		}
+		return self::$instance;
+	}
+
+	public function __clone() {
+		wp_die( __( 'Cheatin’ uh?' ) );
+	}
+
+	public function __wakeup() {
+		wp_die( __( 'Cheatin’ uh?' ) );
+	}
+
+	public function __isset( $key ) {
+		return isset( $this->data[$key] );
+	}
+
+	public function __get( $key ) {
+		return isset( $this->data[$key] ) ? $this->data[$key] : null;
+	}
+
+	public function __set( $key, $value ) {
+		$this->data[$key] = $value;
+	}
+
+	private function __construct() {
+		/** Do nothing **/
+	}
 
 	/**
-	 * Construct the plugin!
+	 * Setup actions for the plugin
+	 *
+	 * @since 0.1
 	 */
-	function Document_Feedback() {
+	private function setup_actions() {
 
 		add_action( 'init',                                        array( $this, 'action_init_initialize_plugin' ) );
 		add_action( 'admin_init',                                  array( $this, 'action_admin_init_add_meta_box' ) );
@@ -436,5 +470,7 @@ class Document_Feedback {
 
 }
 
-global $document_feedback;
-$document_feedback = new Document_Feedback();
+function Document_Feedback() {
+	return Document_Feedback::get_instance();
+}
+add_action( 'plugins_loaded', 'Document_Feedback' );

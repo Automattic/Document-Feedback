@@ -96,7 +96,7 @@ class Document_Feedback {
 	function action_admin_init_add_meta_box() {
 
 		foreach ( $this->post_types as $post_type ) {
-			add_meta_box( 'document-feedback', __( 'Document Feedback', 'document-feedback'), array( &$this, 'post_meta_box'), $post_type, 'advanced', 'high');
+			add_meta_box( 'document-feedback', __( 'Document Feedback', 'document-feedback'), array( $this, 'post_meta_box'), $post_type, 'advanced', 'high');
 		}
 		
 	}

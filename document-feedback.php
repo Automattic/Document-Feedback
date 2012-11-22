@@ -65,6 +65,7 @@ class Document_Feedback {
 		$this->options = array(
 				'send_notification'        => true, // Send an email to the author and contributors
 				'throttle_limit'           => 3600, // How often (seconds) a user can submit a feedback
+				'transient_prefix'		   => 'document_feedback_', // format is prefix . user_id . post_id
 			);
 		$this->options = apply_filters( 'document_feedback_options', $this->options );
 		
@@ -210,14 +211,55 @@ class Document_Feedback {
 			$response = array(
 					'status' => 'success',
 					'message' => 'comment-id-' . $comment_id,
+					'comment_id' => $comment_id
 				);
 		}
 		// Follow up response form submission
 		// Save the message submitted as the message in the comment
 		else {
+			$comment = get_comment( $comment_id, ARRAY_A );
+			
+			// Manage comment and update if existing and if the comment author is the same as the feedback author
+			if( ! is_null( $comment ) ) {
+				$comment_author_id = (int) $comment['user_id'];
+				if( $comment_author_id && $comment_author_id == $current_user->ID ) {
+					$comment['comment_content'] = $_POST['response'];
+					$is_comment_updated = wp_update_comment( $comment );
+					if( ! $is_comment_updated ) {
+						$error = new WP_Error( 'invalid-post', __( 'Comment not updated.', 'document-feedback' ) );
+					} else {
+						// successfully update a comment!
+						// add a transient first so no extra feedback is allowed.
+						$transient_option = $this->options['transient_prefix'] . $comment['user_id'] . '_' . $post_id;
+						set_transient( $transient_option, $transient_option, $this->options['throttle_limit'] );
+
+						// send a happy response
+						$response = array(
+								'status' => 'final_response',
+								'message' => $comment['comment_content'],
+						);
+						echo json_encode( $response );
+						exit;
+					}
+				} else {
+					$error = new WP_Error( 'invalid-post', __( 'Invalid user ID for comment.', 'document-feedback' ) );
+				}			
+			} else {
+				$error = new WP_Error( 'invalid-post', __( 'Invalid comment entry.', 'document-feedback' ) );
+			}
+
+			if ( is_wp_error( $error ) ) {
+				$response = array(
+						'status' => 'error',
+						'message' => $error->get_error_message(),
+				);
+				echo json_encode( $response );
+				exit;
+			}
+			
 			$response = array(
 					'status' => 'success',
-					'message' => $comment_id,
+					'message' => $comment['comment_content']
 				);
 		}
 
@@ -238,117 +280,156 @@ class Document_Feedback {
 			return $the_content;
 
 		// @todo Show a message if the user submitted a response in the last X minutes
+		$current_user = wp_get_current_user();
+		$post_id = $post->ID;
+		$current_user_id = $current_user->ID;
 
-		// Javascript for the form
-		ob_start(); ?>
-		<script type="text/javascript">
-			jQuery(document).ready(function(){
-				jQuery('#document-feedback .document-feedback-form input.button').click(function(){
-					var button_id = jQuery(this).attr('id');
-					var comment_id = jQuery('#document-feedback-comment-id').val();
-					var post_id = jQuery('#document-feedback-post-id').val();
-					var nonce = jQuery('#document-feedback-nonce').val();
-						
-					if ( button_id == 'document-feedback-accept-button' ) {
-						var form = 'prompt';
-						var response = 'accept';
-					} else if ( button_id == 'document-feedback-decline-button' ) {
-						var form = 'prompt';
-						var response = 'decline';
-					} else {
-						var form = 'response';
-						var response = jQuery(this).sibling('.document-feedback-response').val();
-					}
-					var df_data = {
-						action: 'document_feedback_form_submission',
-						form: form,
-						nonce: nonce,
-						response: response,
-						post_id: post_id,
-						comment_id: comment_id,
-					};
-					jQuery.post( ajaxurl, df_data, function( response ) {
-						console.log( response );
+		// get transient if the user already sent the feedback
+		$transient_option = $this->options['transient_prefix'] . $current_user_id . '_' . $post_id;
+		$transient = get_transient( $transient_option );
+		
+		// display the form if transient is empty
+		if ( ! $transient ) {
+			// Javascript for the form
+			ob_start(); ?>
+			<script type="text/javascript">
+				jQuery(document).ready(function(){
+					jQuery('#document-feedback .document-feedback-form input.button').click(function(){
+						var button_id = jQuery(this).attr('id');
+						var comment_id = jQuery('#document-feedback-comment-id').val();
+						var post_id = jQuery('#document-feedback-post-id').val();
+						var nonce = jQuery('#document-feedback-nonce').val();
+							
+						if ( button_id == 'document-feedback-accept-button' ) {
+							var form = 'prompt';
+							var response = 'accept';
+						} else if ( button_id == 'document-feedback-decline-button' ) {
+							var form = 'prompt';
+							var response = 'decline';
+						} else {
+							var form = 'response';
+							var response = jQuery(this).siblings('.document-feedback-response').val();
+						}
+						var df_data = {
+							action: 'document_feedback_form_submission',
+							form: form,
+							nonce: nonce,
+							response: response,
+							post_id: post_id,
+							comment_id: comment_id,
+						};
+						jQuery.post( ajaxurl, df_data, function( response ) {
+							response_obj = jQuery.parseJSON( response );
+							var comment_id = response_obj.comment_id;
+							if( comment_id === undefined || isNaN( parseInt( comment_id ) ) ) {
+								comment_id = 0;
+							}
+							if( df_data.response === 'accept' ) {
+								jQuery('#document-feedback-comment-id').val( comment_id );
+								jQuery('#document-feedback .document-feedback-form').hide();
+								jQuery('#document-feedback-accept').show();
+								jQuery('#document-feedback-decline').hide();
+							} else if( df_data.response === 'decline' ) {
+								jQuery('#document-feedback-comment-id').val( comment_id );
+								jQuery('#document-feedback .document-feedback-form').hide();
+								jQuery('#document-feedback-accept').hide();
+								jQuery('#document-feedback-decline').show();
+							} else if( response_obj.status === 'final_response' ) {
+								jQuery('#document-feedback-accept').hide();
+								jQuery('#document-feedback-decline').hide();
+								jQuery('#document-feedback-success').show();
+							}
+							console.log( response );
+							return false;
+						});
 						return false;
 					});
-					return false;
 				});
-			});
-		</script>
-		<?php
-		$script = ob_get_contents();
-		ob_end_clean();
-
-		// Styles for the form
-		ob_start(); ?>
-		<style type="text/css">
-			#document-feedback {
-				border-top: 1px solid #EEE;
-				margin-top: 10px;
-				padding-top: 10px;
-			}
-			#document-feedback #document-feedback-accept,
-			#document-feedback #document-feedback-decline {
-				display: none;
-			}
-			#document-feedback label.block {
-				display:block;
-			}
-			#document-feedback input.medium {
-				width: 70%;
-			}
-			#document-feedback #document-feedback-prompt label {
-				margin-right: 20px;
-			}
-		</style>
-		<?php
-		$styles = ob_get_contents();
-		ob_end_clean();
-
-		// Initial prompt
-		ob_start(); ?>
-		<form id="document-feedback-prompt" class="document-feedback-form" method="POST" action="">
-			<label><?php echo esc_html( $this->strings['prompt'] ); ?></label>
-			<input type="submit" class="button" id="document-feedback-accept-button" name="document-feedback-accept-button" value="<?php echo esc_attr( $this->strings['accept'] ); ?>" />
-			<input type="submit" class="button" id="document-feedback-decline-button" name="document-feedback-decline-button" value="<?php echo esc_attr( $this->strings['decline'] ); ?>" />
-		</form>
-		<?php
-		$prompt = ob_get_contents();
-		ob_end_clean();
-
-		// Follow-up accept question
-		ob_start(); ?>
-		<form id="document-feedback-accept" class="document-feedback-form" method="POST" action="">
-			<label class="block" for="document-feedback-accept-response"><?php echo esc_html( $this->strings['prompt_response'] . ' ' . $this->strings['accept_prompt'] ); ?></label>
-			<input type="text" class="medium" id="document-feedback-accept-response" name="document-feedback-accept-response" class="document-feedback-response" />
-			<input type="submit" class="button document-feedback-submit-response" name="submit" value="<?php _e( 'Send feedback', 'document-feedback' ); ?>" />
-		</form>
-		<?php
-		$accept = ob_get_contents();
-		ob_end_clean();
-
-		// Follow-up decline question
-		ob_start(); ?>
-		<form id="document-feedback-decline" class="document-feedback-form" method="POST" action="">
-			<label class="block" for="document-feedback-decline-response"><?php echo esc_html( $this->strings['prompt_response'] . ' ' . $this->strings['decline_prompt'] ); ?></label>
-			<input type="text" class="medium" id="document-feedback-decline-response" name="document-feedback-decline-response" class="document-feedback-response" />
-			<input type="submit" class="button document-feedback-submit-response" name="submit" value="<?php _e( 'Send feedback', 'document-feedback' ); ?>" />
-		</form>
-		<?php
-		$decline = ob_get_contents();
-		ob_end_clean();
-
-		// Other data to store in a hidden fashion
-		ob_start(); ?>
-		<input type="hidden" id="document-feedback-post-id" value="<?php the_id(); ?>" />
-		<input type="hidden" id="document-feedback-comment-id" value="0" />
-		<?php wp_nonce_field( 'document-feedback', 'document-feedback-nonce' ); ?>
-		<?php
-		$data = ob_get_contents();
-		ob_end_clean();
-
-		return $the_content . $script . $styles . '<div id="document-feedback">' . $prompt . $accept . $decline . $data . '</div>';
-		
+			</script>
+			<?php
+			$script = ob_get_contents();
+			ob_end_clean();
+	
+			// Styles for the form
+			ob_start(); ?>
+			<style type="text/css">
+				#document-feedback {
+					border-top: 1px solid #EEE;
+					margin-top: 10px;
+					padding-top: 10px;
+				}
+				#document-feedback #document-feedback-accept,
+				#document-feedback #document-feedback-decline,
+				#document-feedback #document-feedback-success {
+					display: none;
+				}
+				#document-feedback label.block {
+					display:block;
+				}
+				#document-feedback input.medium {
+					width: 70%;
+				}
+				#document-feedback #document-feedback-prompt label {
+					margin-right: 20px;
+				}
+			</style>
+			<?php
+			$styles = ob_get_contents();
+			ob_end_clean();
+	
+			// Initial prompt
+			ob_start(); ?>
+			<div id="document-feedback-success"><?php echo esc_html ($this->strings['final_response'] ); ?></div>
+			<form id="document-feedback-prompt" class="document-feedback-form" method="POST" action="">
+				<label><?php echo esc_html( $this->strings['prompt'] ); ?></label>
+				<input type="submit" class="button" id="document-feedback-accept-button" name="document-feedback-accept-button" value="<?php echo esc_attr( $this->strings['accept'] ); ?>" />
+				<input type="submit" class="button" id="document-feedback-decline-button" name="document-feedback-decline-button" value="<?php echo esc_attr( $this->strings['decline'] ); ?>" />
+			</form>
+			<?php
+			$prompt = ob_get_contents();
+			ob_end_clean();
+	
+			// Follow-up accept question
+			ob_start(); ?>
+			<form id="document-feedback-accept" class="document-feedback-form" method="POST" action="">
+				<label class="block" for="document-feedback-accept-response"><?php echo esc_html( $this->strings['prompt_response'] . ' ' . $this->strings['accept_prompt'] ); ?></label>
+				<input type="text" class="medium document-feedback-response" id="document-feedback-accept-response" name="document-feedback-accept-response" />
+				<input type="submit" class="button document-feedback-submit-response" name="submit" value="<?php _e( 'Send feedback', 'document-feedback' ); ?>" />
+			</form>
+			<?php
+			$accept = ob_get_contents();
+			ob_end_clean();
+	
+			// Follow-up decline question
+			ob_start(); ?>
+			<form id="document-feedback-decline" class="document-feedback-form" method="POST" action="">
+				<label class="block" for="document-feedback-decline-response"><?php echo esc_html( $this->strings['prompt_response'] . ' ' . $this->strings['decline_prompt'] ); ?></label>
+				<input type="text" class="medium document-feedback-response" id="document-feedback-decline-response" name="document-feedback-decline-response" />
+				<input type="submit" class="button document-feedback-submit-response" name="submit" value="<?php _e( 'Send feedback', 'document-feedback' ); ?>" />
+			</form>
+			<?php
+			$decline = ob_get_contents();
+			ob_end_clean();
+	
+			// Other data to store in a hidden fashion
+			ob_start(); ?>
+			<input type="hidden" id="document-feedback-post-id" value="<?php the_id(); ?>" />
+			<input type="hidden" id="document-feedback-comment-id" value="0" />
+			<?php wp_nonce_field( 'document-feedback', 'document-feedback-nonce' ); ?>
+			<?php
+			$data = ob_get_contents();
+			ob_end_clean();
+	
+			return $the_content . $script . $styles . '<div id="document-feedback">' . $prompt . $accept . $decline . $data . '</div>';
+		} else {
+			ob_start(); ?>
+			<div id="document-feedback-success-sent"><?php echo esc_html ($this->strings['final_response'] ); ?></div>
+			
+			<?php $data = ob_get_contents();
+			ob_end_clean();
+			
+			return $the_content . '<div id="document-feedback">' . $data . '</div>';
+		}
 	}
 
 }

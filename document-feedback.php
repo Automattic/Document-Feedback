@@ -146,19 +146,24 @@ class Document_Feedback {
 			wp_enqueue_script( 'jquery' );
 	 }
 
-	 function ensure_ajaxurl() {
+	/**
+	 * Ensure there's an 'ajaxurl' var for us to reference on the frontend
+	 */
+	function ensure_ajaxurl() {
+
 		if ( is_admin() || !is_user_logged_in() )
 			return;
-		$current_user = wp_get_current_user();
+		
+		// Accommodate mapped domains
+		if ( home_url() != site_url() )
+			$ajaxurl = home_url( '/wp-admin/admin-ajax.php' );
+		else
+			$ajaxurl = admin_url( 'admin-ajax.php' );
+
 		?>
 		<script type="text/javascript">
 		//<![CDATA[
-		var userSettings = {
-				'url': '<?php echo SITECOOKIEPATH; ?>',
-				'uid': '<?php echo $current_user->ID; ?>',
-				'time':'<?php echo time() ?>'
-			},
-			ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+		var ajaxurl = '<?php echo esc_js( $ajaxurl ); ?>';
 		//]]>
 		</script>
 		<?php

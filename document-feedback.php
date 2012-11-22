@@ -192,21 +192,21 @@ class Document_Feedback {
 
 		// User must be logged in for all actions
 		if ( ! is_user_logged_in() )
-			$this->do_ajax_response( 'error', __( 'You need to be logged in to submit feedback.', 'document-feedback' ) );
+			$this->do_ajax_response( 'error', array( 'message' => __( 'You need to be logged in to submit feedback.', 'document-feedback' ) ) );
 
 		// Nonce check
 		if ( ! wp_verify_nonce( $_POST['nonce'], 'document-feedback' ) )
-			$this->do_ajax_response( 'error', __( 'Nonce error. Are you sure you are who you say you are?', 'document-feedback' ) );
+			$this->do_ajax_response( 'error', array( 'message' => __( 'Nonce error. Are you sure you are who you say you are?', 'document-feedback' ) ) );
 
 		// Feedback must be left on a valid post
 		$post_id = (int)$_POST['post_id'];
 		if ( false === ( $post = get_post( $post_id ) ) )
-			$this->do_ajax_response( 'error', __( 'Invalid post for feedback.', 'document-feedback' ) );
+			$this->do_ajax_response( 'error', array( 'message' => __( 'Invalid post for feedback.', 'document-feedback' ) ) );
 
 		// Check that the comment exists if we're passed a valid comment ID
 		$comment_id = (int)$_POST['comment_id'];
 		if ( $comment_id && ( false === ( $comment = get_comment( $comment_id ) ) ) )
-			$this->do_ajax_response( 'error', __( 'Invalid comment.', 'document-feedback' ) );
+			$this->do_ajax_response( 'error', array( 'message' => __( 'Invalid comment.', 'document-feedback' ) ) );
 
 		// @todo Ensure the user isn't hitting the throttle limit
 
@@ -233,62 +233,38 @@ class Document_Feedback {
 
 			$comment_id = wp_insert_comment( $comment_data );
 			$response = array(
-					'status' => 'success',
 					'message' => 'comment-id-' . $comment_id,
 					'comment_id' => $comment_id
 				);
+			$this->do_ajax_response( 'success', $response );
 		}
 		// Follow up response form submission
 		// Save the message submitted as the message in the comment
-		else {
-			$comment = get_comment( $comment_id, ARRAY_A );
+		
+		$comment = get_comment( $comment_id, ARRAY_A );
+
+		if ( ! $comment )
+			$this->do_ajax_response( 'error', array( 'message' => __( 'Invalid comment entry.', 'document-feedback' ) ) );
+
+		if ( (int)$comment['user_id'] != $current_user->ID )
+			$this->do_ajax_response( 'error', array( 'message' =>  __( 'Invalid user ID for comment.', 'document-feedback' ) ) );
 			
-			// Manage comment and update if existing and if the comment author is the same as the feedback author
-			if( ! is_null( $comment ) ) {
-				$comment_author_id = (int) $comment['user_id'];
-				if( $comment_author_id && $comment_author_id == $current_user->ID ) {
-					$comment['comment_content'] = $_POST['response'];
-					$is_comment_updated = wp_update_comment( $comment );
-					if( ! $is_comment_updated ) {
-						$error = new WP_Error( 'invalid-post', __( 'Comment not updated.', 'document-feedback' ) );
-					} else {
-						// successfully update a comment!
-						// add a transient first so no extra feedback is allowed.
-						$transient_option = $this->options['transient_prefix'] . $comment['user_id'] . '_' . $post_id;
-						set_transient( $transient_option, $transient_option, $this->options['throttle_limit'] );
+		// Manage comment and update if existing and if the comment author is the same as the feedback author
+		$comment['comment_content'] = sanitize_text_field( $_POST['response'] );
+		$is_comment_updated = wp_update_comment( $comment );
+		if ( ! $is_comment_updated ) 
+			$this->do_ajax_response( 'error', array( 'message' => __( 'Comment not updated.', 'document-feedback' ) ) );
 
-						// send a happy response
-						$response = array(
-								'status' => 'final_response',
-								'message' => $comment['comment_content'],
-						);
-						echo json_encode( $response );
-						exit;
-					}
-				} else {
-					$error = new WP_Error( 'invalid-post', __( 'Invalid user ID for comment.', 'document-feedback' ) );
-				}			
-			} else {
-				$error = new WP_Error( 'invalid-post', __( 'Invalid comment entry.', 'document-feedback' ) );
-			}
+		// successfully update a comment!
+		// add a transient first so no extra feedback is allowed.
+		$transient_option = $this->options['transient_prefix'] . $comment['user_id'] . '_' . $post_id;
+		set_transient( $transient_option, $transient_option, $this->options['throttle_limit'] );
 
-			if ( is_wp_error( $error ) ) {
-				$response = array(
-						'status' => 'error',
-						'message' => $error->get_error_message(),
-				);
-				echo json_encode( $response );
-				exit;
-			}
-			
-			$response = array(
-					'status' => 'success',
-					'message' => $comment['comment_content']
-				);
-		}
-
-		echo json_encode( $response );
-		exit;
+		// send a happy response
+		$response = array(
+				'message' => 'final_response',
+		);
+		$this->do_ajax_response( 'success', $response );
 	}
 
 	/**
@@ -298,6 +274,8 @@ class Document_Feedback {
 	 * @param array $data Any additional data
 	 */
 	private function do_ajax_response( $status, $data = array() ) {
+
+		header('Content-type: application/json');
 
 		$response = array(
 				'status' => $status,
@@ -359,8 +337,8 @@ class Document_Feedback {
 							comment_id: comment_id,
 						};
 						jQuery.post( ajaxurl, df_data, function( response ) {
-							response_obj = jQuery.parseJSON( response );
-							var comment_id = response_obj.comment_id;
+							var comment_id = response.comment_id;
+							console.log( comment_id );
 							if( comment_id === undefined || isNaN( parseInt( comment_id ) ) ) {
 								comment_id = 0;
 							}
@@ -374,7 +352,7 @@ class Document_Feedback {
 								jQuery('#document-feedback .document-feedback-form').hide();
 								jQuery('#document-feedback-accept').hide();
 								jQuery('#document-feedback-decline').show();
-							} else if( response_obj.status === 'final_response' ) {
+							} else if( response.message === 'final_response' ) {
 								jQuery('#document-feedback-accept').hide();
 								jQuery('#document-feedback-decline').hide();
 								jQuery('#document-feedback-success').show();

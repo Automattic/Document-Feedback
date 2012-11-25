@@ -2,8 +2,8 @@
 /*
 Plugin Name: Document Feedback
 Plugin URI: http://danielbachhuber.com/plugins/document-feedback/
-Description: Close the loop &mdash; Get feedback from readers on the documentation you write
-Version: 0.0
+Description: Close the loop &mdash; get feedback from readers on the documentation you write
+Version: 0.1-working
 Author: Daniel Bachhuber
 Author URI: http://danielbachhuber.com/
 License: GPLv2 or later
@@ -23,13 +23,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
-
-/*
-Todo list:
-- Show the avatar of the author next to the feedback prompt
-- Ensure the styles work in most themes
-- Build a post meta box that displays the data
 */
 
 if ( !class_exists( 'Document_Feedback' ) ) {
@@ -83,8 +76,9 @@ class Document_Feedback {
 		add_action( 'admin_init',                                  array( $this, 'action_admin_init_add_meta_box' ) );
 		add_action( 'wp_enqueue_scripts',                          array( $this, 'action_wp_enqueue_scripts_add_jquery' ) );
 		add_action( 'admin_enqueue_scripts',                          array( $this, 'action_admin_enqueue_scripts_add_scripts' ) );
-		add_action( 'wp_head',                                     array( $this, 'ensure_ajaxurl' ), 1 );
+		add_action( 'wp_head',                                     array( $this, 'ensure_ajaxurl' ), 11 );
 		add_action( 'wp_ajax_document_feedback_form_submission',   array( $this, 'action_wp_ajax_handle_form_submission' ) );
+		add_action( 'document_feedback_submitted',                 array( $this, 'send_notification' ), 10, 2 );
 		add_filter( 'the_content',                                 array( $this, 'filter_the_content_append_feedback_form' ) );
 	}
 
@@ -358,11 +352,17 @@ class Document_Feedback {
 			
 			// Set the comment type based on the value of the response
 			if ( $_POST['response'] == 'accept' )
-				$comment_data['comment_type'] = 'df-accept';
+				$comment_data['comment_approved'] = 'df-accept';
 			if ( $_POST['response'] == 'decline' )
-				$comment_data['comment_type'] = 'df-decline';
+				$comment_data['comment_approved'] = 'df-decline';
+
+			// Document feedbacks are always a special type
+			$comment_data['comment_type'] = 'document-feedback';
 
 			$comment_id = wp_insert_comment( $comment_data );
+
+			do_action( 'document_feedback_submitted', $comment_id, $post_id );
+
 			$response = array(
 					'message' => 'comment-id-' . $comment_id,
 					'comment_id' => $comment_id
@@ -391,6 +391,8 @@ class Document_Feedback {
 		$transient_option = $this->options['transient_prefix'] . $comment['user_id'] . '_' . $post_id;
 		set_transient( $transient_option, $transient_option, $this->options['throttle_limit'] );
 
+		do_action( 'document_feedback_submitted', $comment_id, $post_id );
+
 		// send a happy response
 		$response = array(
 				'message' => 'final_response',
@@ -417,6 +419,42 @@ class Document_Feedback {
 	}
 
 	/**
+	 * Send the document author a notification when feedback
+	 * is submitted
+	 *
+	 * @since 0.1
+	 *
+	 * @param int $comment_id The feedback ID
+	 * @param int $post_id The post ID for the relevant document
+	 */
+	public function send_notification( $comment_id, $post_id ) {
+
+		if ( ! $this->options['send_notification'] )
+			return;
+
+		// Only send a notification if there was qualitative feedback
+		$comment = get_comment( $comment_id );
+		if ( ! $comment || empty( $comment->comment_content ) )
+			return;
+
+		// Make sure the post exists too
+		$post = get_post( $post_id );
+		if ( ! $post )
+			return;
+
+		$subject = '[' . get_bloginfo( 'name' ) . '] ' . sprintf( __( "Feedback received on '%s'", 'document-feedback' ), $post->post_title );
+		$message = sprintf( __( 'You\'ve received new feedback from %1$s (%2$s):', 'document-feedback' ), $comment->comment_author, $comment->comment_author_email ) . PHP_EOL . PHP_EOL;
+		$message .= '"' . $comment->comment_content . '"' . PHP_EOL . PHP_EOL;
+		$message .= sprintf( __( 'You can view/edit the document here: ', 'document-feedback' ) ) . get_permalink( $post_id );
+
+		$document_author = get_user_by( 'id', $post->post_author );
+		$notification_recipients = apply_filters( 'document_feedback_notification_recipients', array( $document_author->user_email ), $comment_id, $post_id );
+		foreach( $notification_recipients as $recipient ) {
+			wp_mail( $recipient, $subject, $message );
+		}
+	}
+
+	/**
 	 * Append the document feedback form to the document
 	 * We're using ob_*() functions to maintain readability of the form
 	 *
@@ -436,7 +474,7 @@ class Document_Feedback {
 		// get transient if the user already sent the feedback
 		$transient_option = $this->options['transient_prefix'] . $current_user_id . '_' . $post_id;
 		$transient = get_transient( $transient_option );
-		
+
 		// display the form if transient is empty
 		if ( ! $transient ) {
 			// Javascript for the form
@@ -469,7 +507,6 @@ class Document_Feedback {
 						};
 						jQuery.post( ajaxurl, df_data, function( response ) {
 							var comment_id = response.comment_id;
-							console.log( comment_id );
 							if( comment_id === undefined || isNaN( parseInt( comment_id ) ) ) {
 								comment_id = 0;
 							}

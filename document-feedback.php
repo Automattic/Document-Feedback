@@ -25,13 +25,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-/*
-Todo list:
-- Show the avatar of the author next to the feedback prompt
-- Ensure the styles work in most themes
-- Build a post meta box that displays the data
-*/
-
 if ( !class_exists( 'Document_Feedback' ) ) {
 
 class Document_Feedback {

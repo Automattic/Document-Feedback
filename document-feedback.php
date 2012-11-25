@@ -75,7 +75,7 @@ class Document_Feedback {
 		add_action( 'init',                                        array( $this, 'action_init_initialize_plugin' ) );
 		add_action( 'admin_init',                                  array( $this, 'action_admin_init_add_meta_box' ) );
 		add_action( 'wp_enqueue_scripts',                          array( $this, 'action_wp_enqueue_scripts_add_jquery' ) );
-		add_action( 'wp_head',                                     array( $this, 'ensure_ajaxurl' ), 1 );
+		add_action( 'wp_head',                                     array( $this, 'ensure_ajaxurl' ), 11 );
 		add_action( 'wp_ajax_document_feedback_form_submission',   array( $this, 'action_wp_ajax_handle_form_submission' ) );
 		add_action( 'document_feedback_submitted',                 array( $this, 'send_notification' ), 10, 2 );
 		add_filter( 'the_content',                                 array( $this, 'filter_the_content_append_feedback_form' ) );

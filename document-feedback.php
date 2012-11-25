@@ -311,9 +311,10 @@ class Document_Feedback {
 		if ( ! $post )
 			return;
 
-		$subject = sprintf( __( "Feedback received on '%s'", 'document-feedback' ), $post->post_title );
+		$subject = '[' . get_bloginfo( 'name' ) . '] ' . sprintf( __( "Feedback received on '%s'", 'document-feedback' ), $post->post_title );
 		$message = sprintf( __( 'You\'ve received new feedback from %1$s (%2$s):', 'document-feedback' ), $comment->comment_author, $comment->comment_author_email ) . PHP_EOL . PHP_EOL;
-		$message .= $comment->comment_content;
+		$message .= '"' . $comment->comment_content . '"' . PHP_EOL . PHP_EOL;
+		$message .= sprintf( __( 'You can view/edit the document here: ', 'document-feedback' ) ) . get_permalink( $post_id );
 
 		$document_author = get_user_by( 'id', $post->post_author );
 		$notification_recipients = apply_filters( 'document_feedback_notification_recipients', array( $document_author->user_email ), $comment_id, $post_id );
@@ -342,7 +343,7 @@ class Document_Feedback {
 		// get transient if the user already sent the feedback
 		$transient_option = $this->options['transient_prefix'] . $current_user_id . '_' . $post_id;
 		$transient = get_transient( $transient_option );
-		
+
 		// display the form if transient is empty
 		if ( ! $transient ) {
 			// Javascript for the form

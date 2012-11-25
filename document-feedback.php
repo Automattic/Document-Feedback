@@ -202,10 +202,55 @@ class Document_Feedback {
 
 		// Get an array with the count of accept and decline feedback comments
 		$feedback_stats = $this->get_feedback_stats( $feedback_comments );
-		
 		?>
-		<p>Nothing here yet.</p>
-		<div id="document-feedback-chart"></div>
+		<script type="text/javascript">
+			jQuery(document).ready( function() {
+				// Get feedback results
+				var accept = <?php echo $feedback_stats['accept']; ?>;
+				var decline = <?php echo $feedback_stats['decline']; ?>;
+				var feedback_stats = [ accept, decline ];
+	
+				// Define pie attributes
+				var pie_options = {
+						type: 'pie',
+						barColor: 'green',
+						width: '250px',
+						height: '250px'
+				}
+
+				// Create the pie
+				jQuery('#document-feedback-chart').sparkline(feedback_stats, pie_options );
+			} );
+		</script>
+		<div class="meta-left">
+			<div id="document-feedback-chart"></div>
+			<div id="document-feedback-legend">
+				<div id="document-feedback-legend-accept">Accept</div>
+				<div id="document-feedback-legend-decline">Decline</div>
+			</div>
+		</div>
+		<div class="meta-right">
+			<div id="document-feedback-comment-wrapper">
+			<?php 
+				$feedback_count = count( $feedback_comments ); 
+				for( $i = 0; $i < $feedback_count; $i++ ) { 
+					$comment = $feedback_comments[ $i ]; ?>
+				<article id="comment-<?php echo $comment->ID; ?>" class="comment">
+					<footer class="comment-meta">
+						<div class="comment-author vcard">
+							<span class="fn"><?php echo $comment->comment_author; ?></span> on 
+							<?php echo $comment->comment_date; ?> 
+							<span class="says">said:</span>
+						</div>
+					</footer>
+		
+					<div class="comment-content">
+						<p><?php echo $comment->comment_content; ?></p>
+					</div>
+				</article>
+			<?php } ?>
+			</div>
+		</div>
 		<?php	
 	}
 	
@@ -223,7 +268,8 @@ class Document_Feedback {
 				'post_id' => $post_id,
  				'status'  => 'approve',
 				// to be filtered with df-accept and df-decline in filter_feedback_comments_clauses
-				'type' => 'document-feedback-type' 
+				'type'    => 'document-feedback-type',
+				'order'   => 'DESC',
 		);
 		
 		// Fetch the comments with the correct type as a filter to the where clause

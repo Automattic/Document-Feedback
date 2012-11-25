@@ -375,7 +375,6 @@ class Document_Feedback {
 						};
 						jQuery.post( ajaxurl, df_data, function( response ) {
 							var comment_id = response.comment_id;
-							console.log( comment_id );
 							if( comment_id === undefined || isNaN( parseInt( comment_id ) ) ) {
 								comment_id = 0;
 							}

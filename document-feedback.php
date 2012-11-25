@@ -84,6 +84,7 @@ class Document_Feedback {
 		add_action( 'wp_enqueue_scripts',                          array( $this, 'action_wp_enqueue_scripts_add_jquery' ) );
 		add_action( 'wp_head',                                     array( $this, 'ensure_ajaxurl' ), 1 );
 		add_action( 'wp_ajax_document_feedback_form_submission',   array( $this, 'action_wp_ajax_handle_form_submission' ) );
+		add_action( 'document_feedback_submitted',                 array( $this, 'send_notification' ), 10, 2 );
 		add_filter( 'the_content',                                 array( $this, 'filter_the_content_append_feedback_form' ) );
 	}
 
@@ -235,6 +236,9 @@ class Document_Feedback {
 			$comment_data['comment_type'] = 'document-feedback';
 
 			$comment_id = wp_insert_comment( $comment_data );
+
+			do_action( 'document_feedback_submitted', $comment_id, $post_id );
+
 			$response = array(
 					'message' => 'comment-id-' . $comment_id,
 					'comment_id' => $comment_id
@@ -263,6 +267,8 @@ class Document_Feedback {
 		$transient_option = $this->options['transient_prefix'] . $comment['user_id'] . '_' . $post_id;
 		set_transient( $transient_option, $transient_option, $this->options['throttle_limit'] );
 
+		do_action( 'document_feedback_submitted', $comment_id, $post_id );
+
 		// send a happy response
 		$response = array(
 				'message' => 'final_response',
@@ -286,6 +292,41 @@ class Document_Feedback {
 		$response = array_merge( $response, $data );
 		echo json_encode( $response );
 		exit;
+	}
+
+	/**
+	 * Send the document author a notification when feedback
+	 * is submitted
+	 *
+	 * @since 0.1
+	 *
+	 * @param int $comment_id The feedback ID
+	 * @param int $post_id The post ID for the relevant document
+	 */
+	public function send_notification( $comment_id, $post_id ) {
+
+		if ( ! $this->options['send_notification'] )
+			return;
+
+		// Only send a notification if there was qualitative feedback
+		$comment = get_comment( $comment_id );
+		if ( ! $comment || empty( $comment->comment_content ) )
+			return;
+
+		// Make sure the post exists too
+		$post = get_post( $post_id );
+		if ( ! $post )
+			return;
+
+		$subject = sprintf( __( "Feedback received on '%s'", 'document-feedback' ), $post->post_title );
+		$message = sprintf( __( 'You\'ve received new feedback from %1$s (%2$s):', 'document-feedback' ), $comment->comment_author, $comment->comment_author_email ) . PHP_EOL . PHP_EOL;
+		$message .= $comment->comment_content;
+
+		$document_author = get_user_by( 'id', $post->post_author );
+		$notification_recipients = apply_filters( 'document_feedback_notification_recipients', array( $document_author->user_email ), $comment_id, $post_id );
+		foreach( $notification_recipients as $recipient ) {
+			wp_mail( $recipient, $subject, $message );
+		}
 	}
 
 	/**

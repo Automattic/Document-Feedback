@@ -82,6 +82,7 @@ class Document_Feedback {
 		add_action( 'init',                                        array( $this, 'action_init_initialize_plugin' ) );
 		add_action( 'admin_init',                                  array( $this, 'action_admin_init_add_meta_box' ) );
 		add_action( 'wp_enqueue_scripts',                          array( $this, 'action_wp_enqueue_scripts_add_jquery' ) );
+		add_action( 'admin_enqueue_scripts',                          array( $this, 'action_admin_enqueue_scripts_add_scripts' ) );
 		add_action( 'wp_head',                                     array( $this, 'ensure_ajaxurl' ), 1 );
 		add_action( 'wp_ajax_document_feedback_form_submission',   array( $this, 'action_wp_ajax_handle_form_submission' ) );
 		add_filter( 'the_content',                                 array( $this, 'filter_the_content_append_feedback_form' ) );
@@ -145,6 +146,22 @@ class Document_Feedback {
 	 	if ( is_singular() && in_array( $post->post_type, $this->post_types ) && is_user_logged_in() )
 			wp_enqueue_script( 'jquery' );
 	 }
+	 /**
+	  * Add jQuery admin scripts for pie charts
+	  * 
+	  * @since 0.1
+	  */
+	 function action_admin_enqueue_scripts_add_scripts( $hook ) {
+	 	if( 'post.php' === $hook ) {
+		 	// Load pie chart related scripts
+	 		wp_enqueue_script( 'jquery.sparkline', plugins_url( '/js/jquery.sparkline.min.js', __FILE__ ),
+	 			array( 'jquery' ), '1.0', true );
+	 		
+		 	// Custom Document Feedback JS for pies
+		 	wp_enqueue_script( 'document-feedback', plugins_url( '/js/document-feedback.js', __FILE__ ),
+		 		array( 'jquery.sparkline' ), '1.0', true );
+	 	}
+	 }
 
 	/**
 	 * Ensure there's an 'ajaxurl' var for us to reference on the frontend
@@ -177,10 +194,78 @@ class Document_Feedback {
 	 * @todo Display the number of positive feedbacks vs. negative feedbacks
 	 * @todo Display the most recent positive and negative feedbacks
 	 */
-	function post_meta_box() {
+	function post_meta_box( $post ) {
+		$post_id = $post->ID;
+
+		// Get feedback
+		$feedback_comments = $this->get_feedback_comments( $post_id );		
+
+		// Get an array with the count of accept and decline feedback comments
+		$feedback_stats = $this->get_feedback_stats( $feedback_comments );
+		
 		?>
 		<p>Nothing here yet.</p>
+		<div id="document-feedback-chart"></div>
 		<?php	
+	}
+	
+	/**
+	 * Fetch feedback from the comments table
+	 * 
+	 * @param int $post_id the post ID for the comments query
+	 * 
+	 * @since 0.1
+	 * 
+	 */
+	function get_feedback_comments( $post_id ) {
+
+		$comment_args = array(
+				'post_id' => $post_id,
+ 				'status'  => 'approve',
+				// to be filtered with df-accept and df-decline in filter_feedback_comments_clauses
+				'type' => 'document-feedback-type' 
+		);
+		
+		// Fetch the comments with the correct type as a filter to the where clause
+ 		add_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ), 10, 2 );
+		$feedback_comments = get_comments( $comment_args );
+ 		remove_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ) );
+		
+ 		return $feedback_comments;
+	}
+	
+	/**
+	 * Count the accept and decline feedback
+	 * 
+	 * @param comments $feedback_comments an array with the comment objects
+	 * 
+	 * @return array accept and decline comments
+	 * 
+	 * @since 0.1
+	 * 
+	 * @todo looping feedback to save two SQL count queries, optimize if needed (run 2 count queries and one select with limit)
+	 * 
+	 */
+	function get_feedback_stats( $feedback_comments ) {
+		$accept = 0;
+		$decline = 0;
+
+		// Count feedback
+		foreach( $feedback_comments as $comment ) {
+			if( $comment->comment_type == 'df-accept' ) {
+				$accept++;
+			} else if( $comment->comment_type == 'df-decline' ) {
+				$decline++;
+			}	
+		}
+		
+		// Array to return with stats
+		$feedback_stats = array(
+			'accept' => $accept,
+			'decline' => $decline,	
+		);
+
+		return $feedback_stats;	
 	}
 
 	/**
@@ -447,6 +532,19 @@ class Document_Feedback {
 			
 			return $the_content . '<div id="document-feedback">' . $data . '</div>';
 		}
+	}
+	
+	function filter_feedback_comments_clauses( $clauses, $query ) {
+		$expected_type_clause = "comment_type = 'document-feedback-type'";
+		
+		// filter if we are looking for the feedback comments
+		if( isset( $clauses['where'] ) && false !== strpos( $clauses['where'], $expected_type_clause ) ) {
+			$correct_type_clause = "comment_type IN ( 'df-accept', 'df-decline' ) ";
+			
+			$clauses['where'] = str_replace( $expected_type_clause , $correct_type_clause, $clauses['where'] );
+		}
+		
+		return $clauses;
 	}
 
 }

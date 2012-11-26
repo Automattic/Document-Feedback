@@ -191,72 +191,78 @@ class Document_Feedback {
 		$post_id = $post->ID;
 
 		// Get feedback
-		$feedback_comments = $this->get_feedback_comments( $post_id );		
+		$feedback_comments = $this->get_feedback_comments( $post_id ); 
+		
+		if( 0 < count( $feedback_comments ) ) {
 
-		// Get an array with the count of accept and decline feedback comments
-		$feedback_stats = $this->get_feedback_stats( $feedback_comments );
-		?>
-		<script type="text/javascript">
-			jQuery(document).ready( function() {
-				// Get feedback results
-				var accept = <?php echo $feedback_stats['accept']; ?>;
-				var decline = <?php echo $feedback_stats['decline']; ?>;
-				var feedback_stats = [ accept, decline ];
+			// Get an array with the count of accept and decline feedback comments
+			$feedback_stats = $this->get_feedback_stats( $feedback_comments );
+			?>
+			<script type="text/javascript">
+				jQuery(document).ready( function() {
+					// Get feedback results
+					var accept = <?php echo $feedback_stats['accept']; ?>;
+					var decline = <?php echo $feedback_stats['decline']; ?>;
+					var feedback_stats = [ accept, decline ];
+		
+					// Define pie attributes
+					var pie_options = {
+							type: 'pie',
+							sliceColors: ['green', 'red'],
+							width: '230px',
+							height: '230px'
+					}
 	
-				// Define pie attributes
-				var pie_options = {
-						type: 'pie',
-						sliceColors: ['green', 'red'],
-						width: '230px',
-						height: '230px'
-				}
-
-				// Create the pie
-				jQuery('#document-feedback-chart').sparkline( feedback_stats, pie_options );
-			} );
-		</script>
-		<div id="document-feedback-metabox">
-			<div class="left">
-				<div id="document-feedback-chart"></div>
-				<div id="document-feedback-legend">
-					<div id="document-feedback-legend-accept" class="left"><?php _e('Accept', 'document-feedback'); ?></div>
-					<div id="document-feedback-legend-decline" class="right"><?php _e('Decline', 'document-feedback'); ?></div>
+					// Create the pie
+					jQuery('#document-feedback-chart').sparkline( feedback_stats, pie_options );
+				} );
+			</script>
+			<div id="document-feedback-metabox">
+				<div class="left">
+					<div id="document-feedback-chart"></div>
+					<div id="document-feedback-legend">
+						<div id="document-feedback-legend-accept" class="left"><?php _e('Accept', 'document-feedback'); ?></div>
+						<div id="document-feedback-legend-decline" class="right"><?php _e('Decline', 'document-feedback'); ?></div>
+					</div>
 				</div>
-			</div>
-			<div class="right">
-				<div id="document-feedback-comment-wrapper">
-				<?php 
-					$feedback_count = count( $feedback_comments ); 
-					for( $i = 0; $i < $feedback_count; $i++ ) { 
-						global $comment;
-						$comment = $feedback_comments[ $i ]; ?>
-					<article class="comment">
-						<footer class="comment-meta">
-							<div class="comment-author vcard">
-							<?php 
-								printf( __( '%1$s on %2$s <span class="says">said:</span>', 'document-feedback' ),
-									sprintf( '<span class="fn">%s</span>', $comment->comment_author ),
-									sprintf( '<time pubdate datetime="%1$s">%2$s</time>',
-										get_comment_time( 'c' ),
-										/* translators: 1: date, 2: time */
-										sprintf( __( '%1$s at %2$s', 'document-feedback' ), get_comment_date(), get_comment_time() )
-									)
-								);
-							?>	
+				<div class="right">
+					<div id="document-feedback-comment-wrapper">
+					<?php 
+						$feedback_count = count( $feedback_comments ); 
+						for( $i = 0; $i < $feedback_count; $i++ ) { 
+							global $comment;
+							$comment = $feedback_comments[ $i ]; ?>
+						<article class="comment">
+							<footer class="comment-meta">
+								<div class="comment-author vcard">
+								<?php 
+									printf( __( '%1$s on %2$s <span class="says">said:</span>', 'document-feedback' ),
+										sprintf( '<span class="fn">%s</span>', $comment->comment_author ),
+										sprintf( '<time pubdate datetime="%1$s">%2$s</time>',
+											get_comment_time( 'c' ),
+											/* translators: 1: date, 2: time */
+											sprintf( __( '%1$s at %2$s', 'document-feedback' ), get_comment_date(), get_comment_time() )
+										)
+									);
+								?>	
+								</div>
+							</footer>
+				
+							<div class="comment-content <?php echo $comment->comment_approved; ?>">
+								<p><?php echo $comment->comment_content; ?></p>
 							</div>
-						</footer>
-			
-						<div class="comment-content <?php echo $comment->comment_approved; ?>">
-							<p><?php echo $comment->comment_content; ?></p>
-						</div>
-					</article>
-				<?php 
-					unset( $comment );
-				} ?>
+						</article>
+					<?php 
+						unset( $comment );
+					} ?>
+					</div>
 				</div>
 			</div>
-		</div>
-		<?php	
+			<?php
+		} else { ?>
+			<p><?php _e( 'No feedback submitted. ', 'document-feedback' ); ?></p>
+		<?php 
+		}
 	}
 	
 	/**

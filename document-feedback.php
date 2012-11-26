@@ -152,8 +152,8 @@ class Document_Feedback {
 	 			array( 'jquery' ), '1.0', true );
 	 		
 		 	// Custom Document Feedback JS for pies
-		 	wp_enqueue_script( 'document-feedback', plugins_url( '/js/document-feedback.js', __FILE__ ),
-		 		array( 'jquery.sparkline' ), '1.0', true );
+		 	wp_enqueue_style( 'document-feedback', plugins_url( '/css/document-feedback-admin.css', __FILE__ ),
+		 		array( 'jquery.sparkline' ), '1.0' );
 	 	}
 	 }
 
@@ -213,7 +213,7 @@ class Document_Feedback {
 				}
 
 				// Create the pie
-				jQuery('#document-feedback-chart').sparkline(feedback_stats, pie_options );
+				jQuery('#document-feedback-chart').sparkline( feedback_stats, pie_options );
 			} );
 		</script>
 		<div class="meta-left">
@@ -629,7 +629,6 @@ class Document_Feedback {
 		
 		return $clauses;
 	}
-
 }
 
 }

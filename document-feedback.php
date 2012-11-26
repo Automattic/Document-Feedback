@@ -246,7 +246,7 @@ class Document_Feedback {
 							</div>
 						</footer>
 			
-						<div class="comment-content <?php echo $comment->comment_type; ?>">
+						<div class="comment-content <?php echo $comment->comment_approved; ?>">
 							<p><?php echo $comment->comment_content; ?></p>
 						</div>
 					</article>
@@ -271,16 +271,14 @@ class Document_Feedback {
 
 		$comment_args = array(
 				'post_id' => $post_id,
- 				'status'  => 'approve',
-				// to be filtered with df-accept and df-decline in filter_feedback_comments_clauses
-				'type'    => 'document-feedback-type',
+				'type'    => 'document-feedback',
 				'order'   => 'DESC',
 		);
 		
-		// Fetch the comments with the correct type as a filter to the where clause
- 		add_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ), 10, 2 );
+		// Fetch the comments with the correct status as a filter to the where clause
+  		add_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ), 10, 2 );
 		$feedback_comments = get_comments( $comment_args );
- 		remove_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ) );
+  		remove_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ) );
 		
  		return $feedback_comments;
 	}
@@ -303,9 +301,9 @@ class Document_Feedback {
 
 		// Count feedback
 		foreach( $feedback_comments as $comment ) {
-			if( $comment->comment_type == 'df-accept' ) {
+			if( $comment->comment_approved == 'df-accept' ) {
 				$accept++;
-			} else if( $comment->comment_type == 'df-decline' ) {
+			} else if( $comment->comment_approved == 'df-decline' ) {
 				$decline++;
 			}	
 		}
@@ -628,16 +626,21 @@ class Document_Feedback {
 		}
 	}
 	
+	/**
+	 * Filter the feedback comments - add accept and decline clauses as comment_approved
+	 * 
+	 * @since 0.1
+	 * 
+	 */
 	function filter_feedback_comments_clauses( $clauses, $query ) {
-		$expected_type_clause = "comment_type = 'document-feedback-type'";
-		
+		$expected_type_clause = "( comment_approved = '0' OR comment_approved = '1' )";
 		// filter if we are looking for the feedback comments
 		if( isset( $clauses['where'] ) && false !== strpos( $clauses['where'], $expected_type_clause ) ) {
-			$correct_type_clause = "comment_type IN ( 'df-accept', 'df-decline' ) ";
+			$correct_type_clause = "comment_approved IN ( 'df-accept', 'df-decline' ) ";
 			
 			$clauses['where'] = str_replace( $expected_type_clause , $correct_type_clause, $clauses['where'] );
 		}
-		
+
 		return $clauses;
 	}
 }

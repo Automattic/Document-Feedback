@@ -30,20 +30,27 @@
 
 #document-feedback-comment-wrapper .comment-content {
 	background-color: #DDD;
-	border: 1px solid gray;
+	border: 1px solid #DDD;
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
 	padding: 2px;
 	font-size: 13px;
 	margin: 5px 0 15px 0;
-	
 }
 
+#document-feedback-comment-wrapper .comment-content.df-accept:hover {
+	border: 1px solid green;
+}
+
+#document-feedback-comment-wrapper .comment-content.df-decline:hover {
+	border: 1px solid red;
+}
+	
 /* Legend styling */
 
 #document-feedback-legend-accept {
-	background-color: blue;
+	background-color: green;
 	color: white;
 	font-size: 16px;
 	width: 100px;

@@ -206,7 +206,7 @@ class Document_Feedback {
 				// Define pie attributes
 				var pie_options = {
 						type: 'pie',
-						barColor: 'green',
+						sliceColors: ['green', 'red'],
 						width: '230px',
 						height: '230px'
 				}
@@ -246,7 +246,7 @@ class Document_Feedback {
 							</div>
 						</footer>
 			
-						<div class="comment-content">
+						<div class="comment-content <?php echo $comment->comment_type; ?>">
 							<p><?php echo $comment->comment_content; ?></p>
 						</div>
 					</article>

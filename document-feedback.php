@@ -208,7 +208,7 @@ class Document_Feedback {
 					// Define pie attributes
 					var pie_options = {
 							type: 'pie',
-							sliceColors: ['green', 'red'],
+							sliceColors: ['#009344', '#B63733'],
 							width: '230px',
 							height: '230px'
 					}
@@ -266,7 +266,7 @@ class Document_Feedback {
 			</div>
 			<?php
 		} else { ?>
-			<p><?php _e( 'No feedback submitted. ', 'document-feedback' ); ?></p>
+			<p><?php _e( 'No feedback has been submitted yet.', 'document-feedback' ); ?></p>
 		<?php 
 		}
 	}

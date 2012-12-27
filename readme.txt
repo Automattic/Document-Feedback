@@ -17,7 +17,7 @@ Document Feedback appends a simple feedback form to Pages (or other post types t
 
 If the reader indicates "Yes", they'll be asked about which details were useful to them. If the reader indicates "No", they'll be prompted to respond with which details they hoped to see.
 
-Feedback is sent to the document author, and summarized in a post meta box in the admin.
+Feedback is emailed to the post author, and summarized in a post meta box in the admin.
 
 If you'd like to check out the code and contribute, [join us on GitHub](https://github.com/Automattic/Document-Feedback). Pull requests are more than welcome!
 

@@ -248,8 +248,8 @@ class Document_Feedback {
 								</div>
 							</footer>
 				
-							<div class="comment-content <?php echo $comment->comment_approved; ?>">
-								<p><?php echo $comment->comment_content; ?></p>
+							<div class="comment-content <?php echo esc_attr( $comment->comment_approved ); ?>">
+								<p><?php echo esc_html( $comment->comment_content ); ?></p>
 							</div>
 						</article>
 					<?php 

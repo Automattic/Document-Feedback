@@ -78,6 +78,7 @@ class Document_Feedback {
 		add_action( 'admin_enqueue_scripts',                          array( $this, 'action_admin_enqueue_scripts_add_scripts' ) );
 		add_action( 'wp_head',                                     array( $this, 'ensure_ajaxurl' ), 11 );
 		add_action( 'wp_ajax_document_feedback_form_submission',   array( $this, 'action_wp_ajax_handle_form_submission' ) );
+		add_action( 'document_feedback_submitted',                 array( $this, 'set_throttle_transient' ), 10, 2 );
 		add_action( 'document_feedback_submitted',                 array( $this, 'send_notification' ), 10, 2 );
 		add_filter( 'the_content',                                 array( $this, 'filter_the_content_append_feedback_form' ) );
 	}
@@ -406,11 +407,6 @@ class Document_Feedback {
 		if ( ! $is_comment_updated ) 
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Comment not updated.', 'document-feedback' ) ) );
 
-		// successfully update a comment!
-		// add a transient first so no extra feedback is allowed.
-		$transient_option = $this->options['transient_prefix'] . $comment['user_id'] . '_' . $post_id;
-		set_transient( $transient_option, $transient_option, $this->options['throttle_limit'] );
-
 		do_action( 'document_feedback_submitted', $comment_id, $post_id );
 
 		// send a happy response
@@ -436,6 +432,19 @@ class Document_Feedback {
 		$response = array_merge( $response, $data );
 		echo json_encode( $response );
 		exit;
+	}
+
+	/**
+	 * Set the throttle transient
+	 *
+	 * @since 1.0
+	 *
+	 */
+	public function set_throttle_transient( $comment_id, $post_id ) {
+
+		$comment = get_comment( $comment_id );
+		$transient_option = $this->options['transient_prefix'] . $comment->user_id . '_' . $post_id;
+		set_transient( $transient_option, $transient_option, $this->options['throttle_limit'] );
 	}
 
 	/**

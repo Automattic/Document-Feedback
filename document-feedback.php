@@ -201,8 +201,8 @@ class Document_Feedback {
 			<script type="text/javascript">
 				jQuery(document).ready( function() {
 					// Get feedback results
-					var accept = <?php echo $feedback_stats['accept']; ?>;
-					var decline = <?php echo $feedback_stats['decline']; ?>;
+					var accept = <?php echo esc_js( $feedback_stats['accept'] ); ?>;
+					var decline = <?php echo esc_js( $feedback_stats['decline'] ); ?>;
 					var feedback_stats = [ accept, decline ];
 		
 					// Define pie attributes

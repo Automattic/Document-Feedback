@@ -219,10 +219,11 @@ class Document_Feedback {
 			</script>
 			<div id="document-feedback-metabox">
 				<div class="left">
+					<h4>"<?php echo esc_html( $this->strings['prompt'] ); ?>"</h4>
 					<div id="document-feedback-chart"></div>
 					<div id="document-feedback-legend">
-						<div id="document-feedback-legend-accept" class="left"><?php _e('Accept', 'document-feedback'); ?></div>
-						<div id="document-feedback-legend-decline" class="right"><?php _e('Decline', 'document-feedback'); ?></div>
+						<div id="document-feedback-legend-accept" class="left"><?php echo esc_html( $this->strings['accept'] ); ?></div>
+						<div id="document-feedback-legend-decline" class="right"><?php echo esc_html( $this->strings['decline'] ); ?></div>
 					</div>
 				</div>
 				<div class="right">

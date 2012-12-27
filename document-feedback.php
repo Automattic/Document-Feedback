@@ -3,7 +3,7 @@
 Plugin Name: Document Feedback
 Plugin URI: http://danielbachhuber.com/plugins/document-feedback/
 Description: Close the loop &mdash; get feedback from readers on the documentation you write
-Version: 0.1-working
+Version: 1.0-working
 Author: Daniel Bachhuber
 Author URI: http://danielbachhuber.com/
 License: GPLv2 or later
@@ -68,7 +68,7 @@ class Document_Feedback {
 	/**
 	 * Setup actions for the plugin
 	 *
-	 * @since 0.1
+	 * @since 1.0
 	 */
 	private function setup_actions() {
 
@@ -86,7 +86,7 @@ class Document_Feedback {
 	 * Initialize all of the plugin components
 	 * Other plugins can register filters to modify how the plugin runs
 	 *
-	 * @since 0.1
+	 * @since 1.0
 	 */
 	function action_init_initialize_plugin() {
 
@@ -120,7 +120,7 @@ class Document_Feedback {
 	/**
 	 * Hooks and such only to run in the admin
 	 *
-	 * @since 0.1
+	 * @since 1.0
 	 */
 	function action_admin_init_add_meta_box() {
 
@@ -133,7 +133,7 @@ class Document_Feedback {
 	/**
 	 * Add jQuery on relevant pages because we need it
 	 *
-	 * @since 0.1
+	 * @since 1.0
 	 */
 	 function action_wp_enqueue_scripts_add_jquery() {
 	 	global $post;
@@ -143,7 +143,7 @@ class Document_Feedback {
 	 /**
 	  * Add jQuery admin scripts for pie charts
 	  * 
-	  * @since 0.1
+	  * @since 1.0
 	  */
 	 function action_admin_enqueue_scripts_add_scripts( $hook ) {
 	 	if( 'post.php' === $hook ) {
@@ -158,6 +158,8 @@ class Document_Feedback {
 
 	/**
 	 * Ensure there's an 'ajaxurl' var for us to reference on the frontend
+	 * 
+	 * @since 1.0
 	 */
 	function ensure_ajaxurl() {
 
@@ -182,10 +184,7 @@ class Document_Feedback {
 	/**
 	 * Add a post meta box summarizing the feedback given on a document
 	 *
-	 * @since 0.1
-	 *
-	 * @todo Display the number of positive feedbacks vs. negative feedbacks
-	 * @todo Display the most recent positive and negative feedbacks
+	 * @since 1.0
 	 */
 	function post_meta_box( $post ) {
 		$post_id = $post->ID;
@@ -276,7 +275,7 @@ class Document_Feedback {
 	 * 
 	 * @param int $post_id the post ID for the comments query
 	 * 
-	 * @since 0.1
+	 * @since 1.0
 	 * 
 	 */
 	function get_feedback_comments( $post_id ) {
@@ -302,7 +301,7 @@ class Document_Feedback {
 	 * 
 	 * @return array accept and decline comments
 	 * 
-	 * @since 0.1
+	 * @since 1.0
 	 * 
 	 * @todo looping feedback to save two SQL count queries, optimize if needed (run 2 count queries and one select with limit)
 	 * 
@@ -332,7 +331,7 @@ class Document_Feedback {
 	/**
 	 * Handle a Document Feedback form submission
 	 *
-	 * @since 0.1
+	 * @since 1.0
 	 */
 	function action_wp_ajax_handle_form_submission() {
 
@@ -443,7 +442,7 @@ class Document_Feedback {
 	 * Send the document author a notification when feedback
 	 * is submitted
 	 *
-	 * @since 0.1
+	 * @since 1.0
 	 *
 	 * @param int $comment_id The feedback ID
 	 * @param int $post_id The post ID for the relevant document
@@ -479,7 +478,7 @@ class Document_Feedback {
 	 * Append the document feedback form to the document
 	 * We're using ob_*() functions to maintain readability of the form
 	 *
-	 * @since 0.1
+	 * @since 1.0
 	 */
 	function filter_the_content_append_feedback_form( $the_content ) {
 		global $post;
@@ -641,7 +640,7 @@ class Document_Feedback {
 	/**
 	 * Filter the feedback comments - add accept and decline clauses as comment_approved
 	 * 
-	 * @since 0.1
+	 * @since 1.0
 	 * 
 	 */
 	function filter_feedback_comments_clauses( $clauses, $query ) {

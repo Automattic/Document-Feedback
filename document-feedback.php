@@ -231,7 +231,12 @@ class Document_Feedback {
 						$feedback_count = count( $feedback_comments ); 
 						for( $i = 0; $i < $feedback_count; $i++ ) { 
 							global $comment;
-							$comment = $feedback_comments[ $i ]; ?>
+							$comment = $feedback_comments[ $i ];
+
+							if ( empty( $comment->comment_content ) )
+								continue;
+
+							?>
 						<article class="comment">
 							<footer class="comment-meta">
 								<div class="comment-author vcard">

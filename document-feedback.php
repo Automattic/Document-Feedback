@@ -91,6 +91,8 @@ class Document_Feedback {
 	 */
 	function action_init_initialize_plugin() {
 
+		load_plugin_textdomain( 'document-feedback', null, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+
 		// Set up all of our plugin options but they can only be modified by filter
 		$this->options = array(
 				'send_notification'        => true, // Send an email to the author and contributors

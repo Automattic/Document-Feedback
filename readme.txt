@@ -1,5 +1,5 @@
 === Document Feedback ===
-Contributors: danielbachhuber, automattic
+Contributors: danielbachhuber, nofearinc, automattic
 Tags: feedback, documentation
 Requires at least: 3.3
 Tested up to: 3.5
@@ -23,10 +23,22 @@ If you'd like to check out the code and contribute, [join us on GitHub](https://
 
 == Installation ==
 
-1. Upload the `document-feedback` folder to your plugins directory (e.g. `/wp-content/plugins/`)
-2. Activate the plugin through the 'Plugins' menu in WordPress
+1. Upload the `document-feedback` folder to your plugins directory (e.g. `/wp-content/plugins/`).
+2. Activate the plugin through the 'Plugins' menu in WordPress.
+3. Document feedback functionality is automatically appended to Pages by default.
+4. (Optionally) Modify the prompt text using a filter.
+
+== Screenshots ==
+
+1. A feedback prompt is automatically appended to every Page. These prompts can be modified with a filter.
+2. If a user submits feedback, they'll be asked to clarify their feedback. These responses are emailed to the post author.
+3. All feedback is summarized in a post meta box on the Page edit screen.
+
+== Frequently Asked Questions ==
+
+There aren't any frequently asked questions yet. Why not [ask one in the forums](http://wordpress.org/support/plugin/document-feedback)?
 
 == Changelog ==
 
-= 0.1 =
+= 1.0 (Dec. 27, 2012) =
 * Initial release

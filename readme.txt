@@ -11,8 +11,6 @@ Close the loop — get feedback from readers on the documentation you write.
 
 == Description ==
 
-Close the loop — get feedback from readers on the documentation you write.
-
 Document Feedback appends a simple feedback form to Pages (or other post types that you specify). Readers are asked whether the document answered their question or not.
 
 If the reader indicates "Yes", they'll be asked about which details were useful to them. If the reader indicates "No", they'll be prompted to respond with which details they hoped to see.
@@ -22,6 +20,8 @@ Feedback is emailed to the post author, and summarized in a post meta box in the
 If you'd like to check out the code and contribute, [join us on GitHub](https://github.com/Automattic/Document-Feedback). Pull requests are more than welcome!
 
 == Installation ==
+
+Here's the low-down on how you can get up and running:
 
 1. Upload the `document-feedback` folder to your plugins directory (e.g. `/wp-content/plugins/`).
 2. Activate the plugin through the 'Plugins' menu in WordPress.

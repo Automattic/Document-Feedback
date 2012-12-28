@@ -3,7 +3,7 @@
 Plugin Name: Document Feedback
 Plugin URI: http://danielbachhuber.com/plugins/document-feedback/
 Description: Close the loop &mdash; get feedback from readers on the documentation you write
-Version: 1.0-working
+Version: 1.0
 Author: Daniel Bachhuber
 Author URI: http://danielbachhuber.com/
 License: GPLv2 or later

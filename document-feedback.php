@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Document Feedback
-Plugin URI: http://danielbachhuber.com/plugins/document-feedback/
+Plugin URI: http://wordpress.org/extend/plugins/document-feedback/
 Description: Close the loop &mdash; get feedback from readers on the documentation you write
 Version: 1.0
-Author: Daniel Bachhuber
-Author URI: http://danielbachhuber.com/
+Author: Daniel Bachhuber, Automattic
+Author URI: http://automattic.com/
 License: GPLv2 or later
 */
 

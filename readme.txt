@@ -40,5 +40,8 @@ There aren't any frequently asked questions yet. Why not [ask one in the forums]
 
 == Changelog ==
 
+= 1.1 (Jan. 8, 2013) =
+* New Turkish localization. Thanks [mustafauysal](https://github.com/mustafauysal).
+
 = 1.0 (Dec. 27, 2012) =
 * Initial release

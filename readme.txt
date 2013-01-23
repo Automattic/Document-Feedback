@@ -42,6 +42,7 @@ There aren't any frequently asked questions yet. Why not [ask one in the forums]
 
 = 1.2 (??? ??, ????) =
 * New Bulgarian localization. Thanks [mpeshev](https://github.com/mpeshev)
+* New Italian localization. Thanks [milesimarco](https://github.com/milesimarco)
 
 = 1.1 (Jan. 8, 2013) =
 * New Turkish localization. Thanks [mustafauysal](https://github.com/mustafauysal).

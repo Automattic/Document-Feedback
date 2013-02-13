@@ -473,7 +473,7 @@ class Document_Feedback {
 		if ( ! $post )
 			return;
 
-		$feedback_type = ( 'df-accept' == $comment->comment_approved ) ? __( 'positive', 'document-feedback' ) : __( 'negative', 'document-feedback' );
+		$feedback_type = ( 'df-accept' == $comment->comment_approved ) ? __( 'positive', 'document-feedback' ) : __( 'constructive', 'document-feedback' );
 
 		$subject = '[' . get_bloginfo( 'name' ) . '] ' . sprintf( __( "Feedback received on '%s'", 'document-feedback' ), $post->post_title );
 		$message = sprintf( __( 'You\'ve received new %1$s feedback from %2$s (%3$s):', 'document-feedback' ), $feedback_type, $comment->comment_author, $comment->comment_author_email ) . PHP_EOL . PHP_EOL;

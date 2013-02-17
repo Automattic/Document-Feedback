@@ -40,6 +40,9 @@ There aren't any frequently asked questions yet. Why not [ask one in the forums]
 
 == Changelog ==
 
+= 1.3 (Feb. 18, 2013) =
+* New Simplified Chinese localization. Thanks [sparanoid](https://github.com/sparanoid)
+
 = 1.2 (Jan. 29, 2013) =
 * New Bulgarian localization. Thanks [mpeshev](https://github.com/mpeshev)
 * New Italian localization. Thanks [milesimarco](https://github.com/milesimarco)

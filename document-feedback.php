@@ -3,7 +3,7 @@
 Plugin Name: Document Feedback
 Plugin URI: http://wordpress.org/extend/plugins/document-feedback/
 Description: Close the loop &mdash; get feedback from readers on the documentation you write
-Version: 1.2
+Version: 1.3
 Author: Daniel Bachhuber, Automattic
 Author URI: http://automattic.com/
 License: GPLv2 or later

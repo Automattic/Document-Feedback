@@ -23,18 +23,14 @@ Here's the low-down on how you can get up and running:
 
 ## Screenshots
 
-![A feedback prompt is automatically appended to every Page. These prompts can be modified with a filter.](screenshot-1.png)
-A feedback prompt is automatically appended to every Page. These prompts can be modified with a filter.
+A feedback prompt is automatically appended to every Page. These prompts can be modified with a filter.  
+![A feedback prompt is automatically appended to every Page. These prompts can be modified with a filter.](screenshot-1.png)  
 
----
+If a user submits feedback, they'll be asked to clarify their feedback. These responses are emailed to the post author.  
+![If a user submits feedback, they'll be asked to clarify their feedback. These responses are emailed to the post author.](screenshot-2.png)  
 
-![If a user submits feedback, they'll be asked to clarify their feedback. These responses are emailed to the post author.](screenshot-2.png)
-If a user submits feedback, they'll be asked to clarify their feedback. These responses are emailed to the post author.
-
----
-
-![All feedback is summarized in a post meta box on the Page edit screen.](screenshot-3.png)
-All feedback is summarized in a post meta box on the Page edit screen.
+All feedback is summarized in a post meta box on the Page edit screen.  
+![All feedback is summarized in a post meta box on the Page edit screen.](screenshot-3.png)  
 
 ## Frequently Asked Questions
 

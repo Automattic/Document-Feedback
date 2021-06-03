@@ -234,6 +234,7 @@ class Document_Feedback {
 						$feedback_count = count( $feedback_comments );
 						for( $i = 0; $i < $feedback_count; $i++ ) {
 							global $comment;
+							//phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- used to enable comment helper funtions
 							$comment = $feedback_comments[ $i ];
 
 							if ( empty( $comment->comment_content ) )
@@ -345,16 +346,16 @@ class Document_Feedback {
 			$this->do_ajax_response( 'error', array( 'message' => __( 'You need to be logged in to submit feedback.', 'document-feedback' ) ) );
 
 		// Nonce check
-		if ( ! wp_verify_nonce( $_POST['nonce'], 'document-feedback' ) )
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'document-feedback' ) )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Nonce error. Are you sure you are who you say you are?', 'document-feedback' ) ) );
 
 		// Feedback must be left on a valid post
-		$post_id = (int)$_POST['post_id'];
+		$post_id = isset( $_POST['post_id'] ) ? (int)$_POST['post_id'] : 0;
 		if ( false === ( $post = get_post( $post_id ) ) )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Invalid post for feedback.', 'document-feedback' ) ) );
 
 		// Check that the comment exists if we're passed a valid comment ID
-		$comment_id = (int)$_POST['comment_id'];
+		$comment_id = isset( $_POST['comment_id'] ) ? (int)$_POST['comment_id'] : 0;
 		if ( $comment_id && ( false === ( $comment = get_comment( $comment_id ) ) ) )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Invalid comment.', 'document-feedback' ) ) );
 
@@ -364,7 +365,7 @@ class Document_Feedback {
 
 		// Form submission for the initial prompt
 		// Create a new comment of accept or decline type against the current user
-		if ( $_POST['form'] == 'prompt' ) {
+		if ( isset( $_POST['form'] ) && $_POST['form'] == 'prompt' ) {
 
 			// Set up all of the base data for our comment
 			$comment_data = array(
@@ -376,9 +377,9 @@ class Document_Feedback {
 				);
 
 			// Set the comment type based on the value of the response
-			if ( $_POST['response'] == 'accept' )
+			if ( isset( $_POST['response'] ) && $_POST['response'] == 'accept' )
 				$comment_data['comment_approved'] = 'df-accept';
-			if ( $_POST['response'] == 'decline' )
+			if ( isset( $_POST['response'] ) && $_POST['response'] == 'decline' )
 				$comment_data['comment_approved'] = 'df-decline';
 
 			// Document feedbacks are always a special type
@@ -406,7 +407,7 @@ class Document_Feedback {
 			$this->do_ajax_response( 'error', array( 'message' =>  __( 'Invalid user ID for comment.', 'document-feedback' ) ) );
 
 		// Manage comment and update if existing and if the comment author is the same as the feedback author
-		$comment['comment_content'] = sanitize_text_field( $_POST['response'] );
+		$comment['comment_content'] = sanitize_text_field( ( isset( $_POST['response'] ) ? $_POST['response'] : '' ) );
 		$is_comment_updated = wp_update_comment( $comment );
 		if ( ! $is_comment_updated )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Comment not updated.', 'document-feedback' ) ) );

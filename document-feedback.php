@@ -42,11 +42,11 @@ class Document_Feedback {
 	}
 
 	public function __clone() {
-		wp_die( __( 'Cheatin’ uh?' ) );
+		wp_die( esc_html__( 'Cheatin’ uh?' ) );
 	}
 
 	public function __wakeup() {
-		wp_die( __( 'Cheatin’ uh?' ) );
+		wp_die( esc_html__( 'Cheatin’ uh?' ) );
 	}
 
 	public function __isset( $key ) {
@@ -100,7 +100,7 @@ class Document_Feedback {
 				'transient_prefix'		   => 'document_feedback_', // format is prefix . user_id . post_id
 			);
 		$this->options = apply_filters( 'document_feedback_options', $this->options );
-		
+
 		// Prepare the strings used in the plugin
 		$this->strings = array(
 				'prompt'          => __( "Did this document answer your question?", 'document-feedback' ),
@@ -130,7 +130,7 @@ class Document_Feedback {
 		foreach ( $this->post_types as $post_type ) {
 			add_meta_box( 'document-feedback', __( 'Document Feedback', 'document-feedback'), array( $this, 'post_meta_box'), $post_type, 'advanced', 'high');
 		}
-		
+
 	}
 
 	/**
@@ -145,7 +145,7 @@ class Document_Feedback {
 	 }
 	 /**
 	  * Add jQuery admin scripts for pie charts
-	  * 
+	  *
 	  * @since 1.0
 	  */
 	 function action_admin_enqueue_scripts_add_scripts( $hook ) {
@@ -153,7 +153,7 @@ class Document_Feedback {
 		 	// Load pie chart related scripts
 	 		wp_enqueue_script( 'jquery.sparkline', plugins_url( '/js/jquery.sparkline.min.js', __FILE__ ),
 	 			array( 'jquery' ), '1.0', true );
-	 		
+
 		 	// Custom Document Feedback JS for pies
 		 	wp_enqueue_style( 'document-feedback', plugins_url( '/css/document-feedback-admin.css', __FILE__ ) );
 	 	}
@@ -161,14 +161,14 @@ class Document_Feedback {
 
 	/**
 	 * Ensure there's an 'ajaxurl' var for us to reference on the frontend
-	 * 
+	 *
 	 * @since 1.0
 	 */
 	function ensure_ajaxurl() {
 
 		if ( is_admin() || !is_user_logged_in() )
 			return;
-		
+
 		// Accommodate mapped domains
 		if ( home_url() != site_url() )
 			$ajaxurl = home_url( '/wp-admin/admin-ajax.php' );
@@ -193,8 +193,8 @@ class Document_Feedback {
 		$post_id = $post->ID;
 
 		// Get feedback
-		$feedback_comments = $this->get_feedback_comments( $post_id ); 
-		
+		$feedback_comments = $this->get_feedback_comments( $post_id );
+
 		if( 0 < count( $feedback_comments ) ) {
 
 			// Get an array with the count of accept and decline feedback comments
@@ -206,7 +206,7 @@ class Document_Feedback {
 					var accept = <?php echo esc_js( $feedback_stats['accept'] ); ?>;
 					var decline = <?php echo esc_js( $feedback_stats['decline'] ); ?>;
 					var feedback_stats = [ accept, decline ];
-		
+
 					// Define pie attributes
 					var pie_options = {
 							type: 'pie',
@@ -214,7 +214,7 @@ class Document_Feedback {
 							width: '230px',
 							height: '230px'
 					}
-	
+
 					// Create the pie
 					jQuery('#document-feedback-chart').sparkline( feedback_stats, pie_options );
 				} );
@@ -230,10 +230,11 @@ class Document_Feedback {
 				</div>
 				<div class="right">
 					<div id="document-feedback-comment-wrapper">
-					<?php 
-						$feedback_count = count( $feedback_comments ); 
-						for( $i = 0; $i < $feedback_count; $i++ ) { 
+					<?php
+						$feedback_count = count( $feedback_comments );
+						for( $i = 0; $i < $feedback_count; $i++ ) {
 							global $comment;
+							//phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- used to enable comment helper funtions
 							$comment = $feedback_comments[ $i ];
 
 							if ( empty( $comment->comment_content ) )
@@ -243,24 +244,26 @@ class Document_Feedback {
 						<article class="comment">
 							<footer class="comment-meta">
 								<div class="comment-author vcard">
-								<?php 
+								<?php
+									//phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- is escaped
 									printf( __( '%1$s on %2$s <span class="says">said:</span>', 'document-feedback' ),
-										sprintf( '<span class="fn">%s</span>', $comment->comment_author ),
+										sprintf( '<span class="fn">%s</span>', esc_html( $comment->comment_author ) ),
 										sprintf( '<time pubdate datetime="%1$s">%2$s</time>',
-											get_comment_time( 'c' ),
+											esc_html( get_comment_time( 'c' ) ),
 											/* translators: 1: date, 2: time */
-											sprintf( __( '%1$s at %2$s', 'document-feedback' ), get_comment_date(), get_comment_time() )
+											sprintf( esc_html__( '%1$s at %2$s', 'document-feedback' ), get_comment_date(), get_comment_time() )
 										)
 									);
-								?>	
+									//phpcs:enable
+								?>
 								</div>
 							</footer>
-				
+
 							<div class="comment-content <?php echo esc_attr( $comment->comment_approved ); ?>">
 								<p><?php echo esc_html( $comment->comment_content ); ?></p>
 							</div>
 						</article>
-					<?php 
+					<?php
 						unset( $comment );
 					} ?>
 					</div>
@@ -268,18 +271,18 @@ class Document_Feedback {
 			</div>
 			<?php
 		} else { ?>
-			<p><?php _e( 'No feedback has been submitted yet.', 'document-feedback' ); ?></p>
-		<?php 
+			<p><?php esc_html_e( 'No feedback has been submitted yet.', 'document-feedback' ); ?></p>
+		<?php
 		}
 	}
-	
+
 	/**
 	 * Fetch feedback from the comments table
-	 * 
+	 *
 	 * @param int $post_id the post ID for the comments query
-	 * 
+	 *
 	 * @since 1.0
-	 * 
+	 *
 	 */
 	function get_feedback_comments( $post_id ) {
 
@@ -288,26 +291,26 @@ class Document_Feedback {
 				'type'    => 'document-feedback',
 				'order'   => 'DESC',
 		);
-		
+
 		// Fetch the comments with the correct status as a filter to the where clause
   		add_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ), 10, 2 );
 		$feedback_comments = get_comments( $comment_args );
   		remove_filter( 'comments_clauses', array( $this, 'filter_feedback_comments_clauses' ) );
-		
+
  		return $feedback_comments;
 	}
-	
+
 	/**
 	 * Count the accept and decline feedback
-	 * 
+	 *
 	 * @param comments $feedback_comments an array with the comment objects
-	 * 
+	 *
 	 * @return array accept and decline comments
-	 * 
+	 *
 	 * @since 1.0
-	 * 
+	 *
 	 * @todo looping feedback to save two SQL count queries, optimize if needed (run 2 count queries and one select with limit)
-	 * 
+	 *
 	 */
 	function get_feedback_stats( $feedback_comments ) {
 		$accept = 0;
@@ -319,16 +322,16 @@ class Document_Feedback {
 				$accept++;
 			} else if( $comment->comment_approved == 'df-decline' ) {
 				$decline++;
-			}	
+			}
 		}
-		
+
 		// Array to return with stats
 		$feedback_stats = array(
 			'accept' => $accept,
-			'decline' => $decline,	
+			'decline' => $decline,
 		);
 
-		return $feedback_stats;	
+		return $feedback_stats;
 	}
 
 	/**
@@ -343,16 +346,16 @@ class Document_Feedback {
 			$this->do_ajax_response( 'error', array( 'message' => __( 'You need to be logged in to submit feedback.', 'document-feedback' ) ) );
 
 		// Nonce check
-		if ( ! wp_verify_nonce( $_POST['nonce'], 'document-feedback' ) )
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'document-feedback' ) )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Nonce error. Are you sure you are who you say you are?', 'document-feedback' ) ) );
 
 		// Feedback must be left on a valid post
-		$post_id = (int)$_POST['post_id'];
+		$post_id = isset( $_POST['post_id'] ) ? (int)$_POST['post_id'] : 0;
 		if ( false === ( $post = get_post( $post_id ) ) )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Invalid post for feedback.', 'document-feedback' ) ) );
 
 		// Check that the comment exists if we're passed a valid comment ID
-		$comment_id = (int)$_POST['comment_id'];
+		$comment_id = isset( $_POST['comment_id'] ) ? (int)$_POST['comment_id'] : 0;
 		if ( $comment_id && ( false === ( $comment = get_comment( $comment_id ) ) ) )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Invalid comment.', 'document-feedback' ) ) );
 
@@ -362,7 +365,7 @@ class Document_Feedback {
 
 		// Form submission for the initial prompt
 		// Create a new comment of accept or decline type against the current user
-		if ( $_POST['form'] == 'prompt' ) {
+		if ( isset( $_POST['form'] ) && $_POST['form'] == 'prompt' ) {
 
 			// Set up all of the base data for our comment
 			$comment_data = array(
@@ -372,11 +375,11 @@ class Document_Feedback {
 					'comment_author_url'    => $current_user->user_url,
 					'user_id'               => $current_user->ID,
 				);
-			
+
 			// Set the comment type based on the value of the response
-			if ( $_POST['response'] == 'accept' )
+			if ( isset( $_POST['response'] ) && $_POST['response'] == 'accept' )
 				$comment_data['comment_approved'] = 'df-accept';
-			if ( $_POST['response'] == 'decline' )
+			if ( isset( $_POST['response'] ) && $_POST['response'] == 'decline' )
 				$comment_data['comment_approved'] = 'df-decline';
 
 			// Document feedbacks are always a special type
@@ -394,7 +397,7 @@ class Document_Feedback {
 		}
 		// Follow up response form submission
 		// Save the message submitted as the message in the comment
-		
+
 		$comment = get_comment( $comment_id, ARRAY_A );
 
 		if ( ! $comment )
@@ -402,11 +405,11 @@ class Document_Feedback {
 
 		if ( (int)$comment['user_id'] != $current_user->ID )
 			$this->do_ajax_response( 'error', array( 'message' =>  __( 'Invalid user ID for comment.', 'document-feedback' ) ) );
-			
+
 		// Manage comment and update if existing and if the comment author is the same as the feedback author
-		$comment['comment_content'] = sanitize_text_field( $_POST['response'] );
+		$comment['comment_content'] = sanitize_text_field( ( isset( $_POST['response'] ) ? $_POST['response'] : '' ) );
 		$is_comment_updated = wp_update_comment( $comment );
-		if ( ! $is_comment_updated ) 
+		if ( ! $is_comment_updated )
 			$this->do_ajax_response( 'error', array( 'message' => __( 'Comment not updated.', 'document-feedback' ) ) );
 
 		do_action( 'document_feedback_submitted', $comment_id, $post_id );
@@ -519,7 +522,7 @@ class Document_Feedback {
 						var comment_id = jQuery('#document-feedback-comment-id').val();
 						var post_id = jQuery('#document-feedback-post-id').val();
 						var nonce = jQuery('#document-feedback-nonce').val();
-							
+
 						if ( button_id == 'document-feedback-accept-button' ) {
 							var form = 'prompt';
 							var response = 'accept';
@@ -567,7 +570,7 @@ class Document_Feedback {
 			<?php
 			$script = ob_get_contents();
 			ob_end_clean();
-	
+
 			// Styles for the form
 			ob_start(); ?>
 			<style type="text/css">
@@ -594,7 +597,7 @@ class Document_Feedback {
 			<?php
 			$styles = ob_get_contents();
 			ob_end_clean();
-	
+
 			// Initial prompt
 			ob_start(); ?>
 			<div id="document-feedback-success"><?php echo esc_html ($this->strings['final_response'] ); ?></div>
@@ -606,7 +609,7 @@ class Document_Feedback {
 			<?php
 			$prompt = ob_get_contents();
 			ob_end_clean();
-	
+
 			// Follow-up accept question
 			ob_start(); ?>
 			<form id="document-feedback-accept" class="document-feedback-form" method="POST" action="">
@@ -617,7 +620,7 @@ class Document_Feedback {
 			<?php
 			$accept = ob_get_contents();
 			ob_end_clean();
-	
+
 			// Follow-up decline question
 			ob_start(); ?>
 			<form id="document-feedback-decline" class="document-feedback-form" method="POST" action="">
@@ -628,7 +631,7 @@ class Document_Feedback {
 			<?php
 			$decline = ob_get_contents();
 			ob_end_clean();
-	
+
 			// Other data to store in a hidden fashion
 			ob_start(); ?>
 			<input type="hidden" id="document-feedback-post-id" value="<?php the_id(); ?>" />
@@ -637,31 +640,31 @@ class Document_Feedback {
 			<?php
 			$data = ob_get_contents();
 			ob_end_clean();
-	
+
 			return $the_content . $script . $styles . '<div id="document-feedback">' . $prompt . $accept . $decline . $data . '</div>';
 		} else {
 			ob_start(); ?>
 			<div id="document-feedback-success-sent"><?php echo esc_html ($this->strings['final_response'] ); ?></div>
-			
+
 			<?php $data = ob_get_contents();
 			ob_end_clean();
-			
+
 			return $the_content . '<div id="document-feedback">' . $data . '</div>';
 		}
 	}
-	
+
 	/**
 	 * Filter the feedback comments - add accept and decline clauses as comment_approved
-	 * 
+	 *
 	 * @since 1.0
-	 * 
+	 *
 	 */
 	function filter_feedback_comments_clauses( $clauses, $query ) {
 		$expected_type_clause = "( comment_approved = '0' OR comment_approved = '1' )";
 		// filter if we are looking for the feedback comments
 		if( isset( $clauses['where'] ) && false !== strpos( $clauses['where'], $expected_type_clause ) ) {
 			$correct_type_clause = "comment_approved IN ( 'df-accept', 'df-decline' ) ";
-			
+
 			$clauses['where'] = str_replace( $expected_type_clause , $correct_type_clause, $clauses['where'] );
 		}
 
